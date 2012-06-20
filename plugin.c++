@@ -51,7 +51,7 @@ namespace {
 struct extended_tree {
   tree decl;
   size_t charpos;
-  std::string line;
+  std::string pattern;
 
   extended_tree(tree t) : decl(t),charpos(0) { }
 };
@@ -68,7 +68,35 @@ struct decl_comparator {
 
 typedef std::multiset<extended_tree, decl_comparator> decl_set;
 
-// add charpos and line information
+// transform line to a pattern
+std::string
+line_to_pattern(tree decl, std::string const &line) {
+  int const col = DECL_SOURCE_COLUMN(decl);
+  tree type = TREE_TYPE(decl);
+  int const tc = TREE_CODE(type);
+
+  size_t beg = line.rfind(';', col);
+  if(beg == std::string::npos) {
+    beg = 0;
+  }
+  size_t n = std::string::npos;
+
+  switch(tc) {
+  case FUNCTION_TYPE: { // copy column to (
+    n = line.find('(', col);
+    break;
+  }
+  default:
+    n = line.find(';', col);
+  }
+
+  if(n != std::string::npos) {
+    n -= beg - 1;
+  }
+  return line.substr(beg, n);
+}
+
+// add charpos and pattern information
 void
 extend_trees(decl_set &s) {
   if(s.empty()) {
@@ -94,7 +122,7 @@ extend_trees(decl_set &s) {
       ++line;
       if(line >= xloc.line) {
         xtree.charpos = charpos + xloc.column;
-        xtree.line = buffer;
+        xtree.pattern = line_to_pattern(xtree.decl, buffer);
         new_s.insert(xtree);
         break;
       }
@@ -135,13 +163,13 @@ char const SOH = '\x01';
 void
 print_decl(extended_tree const &xtree) {
   tree decl = xtree.decl;
-  int tc = TREE_CODE(decl);
   const char *name = decl_name(decl);
 
-  cout << xtree.line /* TODO pattern */<< DEL << format_namespaces(decl) << "::" << name << SOH
+  cout << xtree.pattern /* TODO pattern */<< DEL << format_namespaces(decl) << "::" << name << SOH
        << DECL_SOURCE_LINE(decl) << ',' << xtree.charpos << '\n';
 
 #if 0
+  int tc = TREE_CODE(decl);
   cerr << tree_code_name[tc] << ' ' << name << " at "
        << DECL_SOURCE_FILE(decl) << ':'
        << DECL_SOURCE_LINE(decl) << ':'
