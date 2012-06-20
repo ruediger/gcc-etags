@@ -5,7 +5,9 @@ namespace foo { }
 typedef int new_t;
 
 namespace ns1 {
-  class c1 { };
+  class c1 {
+    int m;
+  };
 
   namespace ns2 {
     void foo();
@@ -18,6 +20,9 @@ namespace ns1 {
 }
 
 int glob;
+
+int
+nl;
 
 int main() {
   int i = 1;
