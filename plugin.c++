@@ -26,6 +26,7 @@ extern "C" { // order is important
 #include "diagnostic.h"
 }
 
+#include <cassert>
 #include <iostream>
 #include <set>
 
@@ -47,24 +48,38 @@ struct decl_comparator {
 
 typedef std::multiset<tree, decl_comparator> decl_set;
 
+char const *decl_name(tree decl) {
+  assert(decl);
+  tree id = DECL_NAME(decl);
+  return id ? IDENTIFIER_POINTER(id) : "<unnamed>";
+}
+
+std::string format_namespaces(tree decl) {
+  tree cntxt = DECL_CONTEXT(decl);
+  if(cntxt) {
+    int tc = TREE_CODE(cntxt);
+    if(tc == NAMESPACE_DECL) {
+      return std::string("::") + decl_name(cntxt) + format_namespaces(cntxt);
+    }
+  }
+  return "";
+}
+
 void
 print_decl(tree decl) {
   int tc = TREE_CODE(decl);
-  tree id = DECL_NAME(decl);
-  const char *name =
-    id
-    ? IDENTIFIER_POINTER(id)
-    : "<unnamed>";
+  const char *name = decl_name(decl);
 
   cerr << tree_code_name[tc] << " " << name << " at "
        << DECL_SOURCE_FILE(decl) << ":"
        << DECL_SOURCE_LINE(decl) << endl;
 
+  cerr << format_namespaces(decl) << "::" << name << endl;
+
   tree cntxt = DECL_CONTEXT(decl);
   if(cntxt) {
-    int tc = TREE_CODE(cntxt);
-    id = DECL_NAME(cntxt);
-    cerr << '\t' << tree_code_name[tc] << " " << (id ? IDENTIFIER_POINTER(id) : "<unnamed>") << '\n';
+    tc = TREE_CODE(cntxt);
+    cerr << '\t' << tree_code_name[tc] << " " << decl_name(cntxt) << '\n';
   }
 }
 
