@@ -53,7 +53,7 @@ struct extended_tree {
   size_t charpos;
   std::string line;
 
-  extended_tree(tree t) : decl(t) { }
+  extended_tree(tree t) : decl(t),charpos(0) { }
 };
 
 struct decl_comparator {
@@ -78,13 +78,16 @@ extend_trees(decl_set &s) {
   tree t = s.begin()->decl;
   expanded_location xloc = expand_location(DECL_SOURCE_LOCATION(t));
   if(not xloc.file) {
+    cerr << "Nofile!\n";
     return;
   }
   std::ifstream in(xloc.file);
   std::string buffer;
   int line = 0;
   std::size_t charpos = 0;
-  for(auto xtree : s) {
+
+  decl_set new_s;
+  for(extended_tree xtree : s) { // sadly multiset has no non-const iterator
     xloc = expand_location(DECL_SOURCE_LOCATION(xtree.decl));
 
     while(std::getline(in, buffer)) {
@@ -92,6 +95,7 @@ extend_trees(decl_set &s) {
       if(line >= xloc.line) {
         xtree.charpos = charpos + xloc.column;
         xtree.line = buffer;
+        new_s.insert(xtree);
         break;
       }
       else {
@@ -104,6 +108,8 @@ extend_trees(decl_set &s) {
       return;
     }
   }
+
+  s = std::move(new_s);
 }
 
 char const *decl_name(tree decl) {
@@ -127,14 +133,13 @@ char const DEL = '\x7f';
 char const SOH = '\x01';
 
 void
-print_decl(tree decl) {
+print_decl(extended_tree const &xtree) {
+  tree decl = xtree.decl;
   int tc = TREE_CODE(decl);
   const char *name = decl_name(decl);
 
-  cout << /* TODO pattern */ DEL << format_namespaces(decl) << "::" << name << SOH
-       << DECL_SOURCE_LINE(decl) << ',' << DECL_SOURCE_COLUMN(decl) << '\n';
-
-  // TODO charpos instead of column!
+  cout << xtree.line /* TODO pattern */<< DEL << format_namespaces(decl) << "::" << name << SOH
+       << DECL_SOURCE_LINE(decl) << ',' << xtree.charpos << '\n';
 
 #if 0
   cerr << tree_code_name[tc] << ' ' << name << " at "
@@ -191,7 +196,7 @@ traverse(tree ns) {
   // unsint -> size_of_entries
 
   for(extended_tree const &t : decls) {
-    print_decl(t.decl);
+    print_decl(t);
   }
 }
 
