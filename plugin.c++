@@ -74,11 +74,20 @@ std::string format_namespaces(tree decl) {
   return "";
 }
 
+char const DEL = '\x7f';
+char const SOH = '\x01';
+
 void
 print_decl(tree decl) {
   int tc = TREE_CODE(decl);
   const char *name = decl_name(decl);
 
+  cout << /* TODO pattern */ DEL << format_namespaces(decl) << "::" << name << SOH
+       << DECL_SOURCE_LINE(decl) << ',' << DECL_SOURCE_COLUMN(decl) << '\n';
+
+  // TODO charpos instead of column!
+
+#if 0
   cerr << tree_code_name[tc] << ' ' << name << " at "
        << DECL_SOURCE_FILE(decl) << ':'
        << DECL_SOURCE_LINE(decl) << ':'
@@ -91,6 +100,7 @@ print_decl(tree decl) {
     tc = TREE_CODE(cntxt);
     cerr << '\t' << tree_code_name[tc] << " " << decl_name(cntxt) << '\n';
   }
+#endif
 }
 
 void
@@ -127,7 +137,8 @@ traverse(tree ns) {
     return;
   }
 
-  //cout << "\f\n" << DECL_SOURCE_FILE(decl) << ',' << /* todo unsint? */ '\n';
+  cout << "\f\n" << DECL_SOURCE_FILE(*decls.begin()) << ',' << /* todo unsint? */ '\n';
+  // unsint -> size_of_entries
 
   for(tree const &t : decls) {
     print_decl(t);
