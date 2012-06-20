@@ -1,6 +1,6 @@
 // copied from http://www.codesynthesis.com/~boris/blog/2010/05/03/parsing-cxx-with-gcc-plugin-part-1/
 
-// g++ -I`g++ -print-file-name=plugin`/include -fPIC -shared plugin.c++ -o plugin.so
+// g++ -std=c++0x -Wall -Wextra -I`g++ -print-file-name=plugin`/include -fPIC -shared plugin.c++ -o plugin.so
 // g++ -S -fplugin=./plugin.so test.c++
 
 #include <stdlib.h>
@@ -27,10 +27,71 @@ extern "C" { // order is important
 }
 
 #include <iostream>
+#include <set>
 
 using namespace std;
 
 int plugin_is_GPL_compatible;
+
+struct decl_comparator {
+  bool
+  operator() (tree x, tree y) const {
+    location_t xl = DECL_SOURCE_LOCATION(x);
+    location_t yl = DECL_SOURCE_LOCATION(y);
+ 
+    return xl < yl;
+  }
+};
+
+typedef std::multiset<tree, decl_comparator> decl_set;
+
+void
+print_decl(tree decl) {
+  int tc = TREE_CODE(decl);
+  tree id = DECL_NAME(decl);
+  const char *name =
+    id
+    ? IDENTIFIER_POINTER(id)
+    : "<unnamed>";
+
+  cerr << tree_code_name[tc] << " " << name << " at "
+       << DECL_SOURCE_FILE (decl) << ":"
+       << DECL_SOURCE_LINE (decl) << endl;
+}
+
+void
+collect(tree ns, decl_set& set) {
+  tree decl;
+  cp_binding_level *level = NAMESPACE_LEVEL(ns);
+ 
+  // Collect declarations.
+  for(decl = level->names; decl != 0; decl = TREE_CHAIN (decl)) {
+    if(DECL_IS_BUILTIN(decl)) {
+      continue;
+    }
+ 
+    set.insert(decl);
+  }
+ 
+  // Traverse namespaces.
+  for(decl = level->namespaces; decl != 0; decl = TREE_CHAIN (decl)) {
+    if(DECL_IS_BUILTIN(decl)) {
+      continue;
+    }
+ 
+    collect(decl, set);
+  }
+}
+
+static void
+traverse(tree ns) {
+  decl_set decls;
+  collect(ns, decls);
+ 
+  for(tree const &t : decls) {
+    print_decl(t);
+  }
+}
 
 extern "C" void
 gate_callback(void*, void*) {
@@ -40,12 +101,9 @@ gate_callback(void*, void*) {
   }
 
   int r = 0;
-
-  //
-  // Process AST. Issue diagnostics and set r
-  // to 1 in case of an error.
-  //
   cerr << "processing " << main_input_filename << endl;
+
+  traverse(global_namespace);
 
   exit(r);
 }
