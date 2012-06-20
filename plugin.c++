@@ -10,6 +10,7 @@
 
 extern "C" { // order is important
 #include "gcc-plugin.h"
+#include "plugin-version.h"
 
 #include "config.h"
 #include "system.h"
@@ -50,8 +51,13 @@ gate_callback(void*, void*) {
 }
 
 extern "C" int
-plugin_init(plugin_name_args *info, plugin_gcc_version *ver) {
+plugin_init(plugin_name_args *info, plugin_gcc_version *version) {
   cerr << "starting " << info->base_name << endl;
+
+  if(not plugin_default_version_check(version, &gcc_version)) {
+    cerr << "ERROR: failed version check!\n";
+    return 1;
+  }
 
   asm_file_name = HOST_BIT_BUCKET; // Disable assembly output.
 
