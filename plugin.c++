@@ -26,7 +26,9 @@ extern "C" { // order is important
 #include "diagnostic.h"
 }
 
+#include <string>
 #include <cassert>
+#include <fstream>
 #include <iostream>
 #include <set>
 
@@ -45,17 +47,64 @@ int plugin_is_GPL_compatible;
 
 namespace {
 
+// Adds charpos and line data to GCC's tree structure
+struct extended_tree {
+  tree decl;
+  size_t charpos;
+  std::string line;
+
+  extended_tree(tree t) : decl(t) { }
+};
+
 struct decl_comparator {
   bool
-  operator() (tree x, tree y) const {
-    location_t xl = DECL_SOURCE_LOCATION(x);
-    location_t yl = DECL_SOURCE_LOCATION(y);
+  operator() (extended_tree const &x, extended_tree const &y) const {
+    location_t xl = DECL_SOURCE_LOCATION(x.decl);
+    location_t yl = DECL_SOURCE_LOCATION(y.decl);
 
     return xl < yl;
   }
 };
 
-typedef std::multiset<tree, decl_comparator> decl_set;
+typedef std::multiset<extended_tree, decl_comparator> decl_set;
+
+// add charpos and line information
+void
+extend_trees(decl_set &s) {
+  if(s.empty()) {
+    return;
+  }
+
+  tree t = s.begin()->decl;
+  expanded_location xloc = expand_location(DECL_SOURCE_LOCATION(t));
+  if(not xloc.file) {
+    return;
+  }
+  std::ifstream in(xloc.file);
+  std::string buffer;
+  int line = 0;
+  std::size_t charpos = 0;
+  for(auto xtree : s) {
+    xloc = expand_location(DECL_SOURCE_LOCATION(xtree.decl));
+
+    while(std::getline(in, buffer)) {
+      ++line;
+      if(line >= xloc.line) {
+        xtree.charpos = charpos + xloc.column;
+        xtree.line = buffer;
+        break;
+      }
+      else {
+        charpos += buffer.size();
+      }
+    }
+
+    if(line < xloc.line) {
+      cerr << "IOError!\n";
+      return;
+    }
+  }
+}
 
 char const *decl_name(tree decl) {
   assert(decl);
@@ -104,7 +153,7 @@ print_decl(tree decl) {
 }
 
 void
-collect(tree ns, decl_set& set) {
+collect(tree ns, decl_set &set) {
   tree decl;
   cp_binding_level *level = NAMESPACE_LEVEL(ns);
 
@@ -131,17 +180,18 @@ void
 traverse(tree ns) {
   decl_set decls;
   collect(ns, decls);
+  extend_trees(decls);
 
   if(decls.empty()) {
     cerr << "no declarations\n";
     return;
   }
 
-  cout << "\f\n" << DECL_SOURCE_FILE(*decls.begin()) << ',' << /* todo unsint? */ '\n';
+  cout << "\f\n" << DECL_SOURCE_FILE(decls.begin()->decl) << ',' << /* todo unsint? */ '\n';
   // unsint -> size_of_entries
 
-  for(tree const &t : decls) {
-    print_decl(t);
+  for(extended_tree const &t : decls) {
+    print_decl(t.decl);
   }
 }
 
