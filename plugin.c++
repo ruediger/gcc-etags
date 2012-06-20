@@ -59,6 +59,13 @@ print_decl(tree decl) {
   cerr << tree_code_name[tc] << " " << name << " at "
        << DECL_SOURCE_FILE(decl) << ":"
        << DECL_SOURCE_LINE(decl) << endl;
+
+  tree cntxt = DECL_CONTEXT(decl);
+  if(cntxt) {
+    int tc = TREE_CODE(cntxt);
+    id = DECL_NAME(cntxt);
+    cerr << '\t' << tree_code_name[tc] << " " << (id ? IDENTIFIER_POINTER(id) : "<unnamed>") << '\n';
+  }
 }
 
 void
