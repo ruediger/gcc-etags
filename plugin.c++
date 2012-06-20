@@ -30,6 +30,15 @@ extern "C" { // order is important
 #include <iostream>
 #include <set>
 
+// add missing macros
+#ifndef LOCATION_COLUMN
+// copied from 4.8+
+#define LOCATION_COLUMN(LOC)((expand_location (LOC)).column)
+#endif
+#ifndef DECL_SOURCE_COLUMN
+#define DECL_SOURCE_COLUMN(NODE) LOCATION_COLUMN (DECL_SOURCE_LOCATION (NODE))
+#endif
+
 using namespace std;
 
 int plugin_is_GPL_compatible;
@@ -70,9 +79,10 @@ print_decl(tree decl) {
   int tc = TREE_CODE(decl);
   const char *name = decl_name(decl);
 
-  cerr << tree_code_name[tc] << " " << name << " at "
-       << DECL_SOURCE_FILE(decl) << ":"
-       << DECL_SOURCE_LINE(decl) << endl;
+  cerr << tree_code_name[tc] << ' ' << name << " at "
+       << DECL_SOURCE_FILE(decl) << ':'
+       << DECL_SOURCE_LINE(decl) << ':'
+       << DECL_SOURCE_COLUMN(decl) << endl;
 
   cerr << format_namespaces(decl) << "::" << name << endl;
 
