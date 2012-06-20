@@ -33,12 +33,14 @@ using namespace std;
 
 int plugin_is_GPL_compatible;
 
+namespace {
+
 struct decl_comparator {
   bool
   operator() (tree x, tree y) const {
     location_t xl = DECL_SOURCE_LOCATION(x);
     location_t yl = DECL_SOURCE_LOCATION(y);
- 
+
     return xl < yl;
   }
 };
@@ -55,42 +57,51 @@ print_decl(tree decl) {
     : "<unnamed>";
 
   cerr << tree_code_name[tc] << " " << name << " at "
-       << DECL_SOURCE_FILE (decl) << ":"
-       << DECL_SOURCE_LINE (decl) << endl;
+       << DECL_SOURCE_FILE(decl) << ":"
+       << DECL_SOURCE_LINE(decl) << endl;
 }
 
 void
 collect(tree ns, decl_set& set) {
   tree decl;
   cp_binding_level *level = NAMESPACE_LEVEL(ns);
- 
+
   // Collect declarations.
   for(decl = level->names; decl != 0; decl = TREE_CHAIN (decl)) {
-    if(DECL_IS_BUILTIN(decl)) {
+    if(DECL_IS_BUILTIN(decl) or DECL_EXTERNAL(decl)) {
       continue;
     }
- 
+
     set.insert(decl);
   }
- 
+
   // Traverse namespaces.
   for(decl = level->namespaces; decl != 0; decl = TREE_CHAIN (decl)) {
-    if(DECL_IS_BUILTIN(decl)) {
+    if(DECL_IS_BUILTIN(decl) or DECL_EXTERNAL(decl)) {
       continue;
     }
- 
+
     collect(decl, set);
   }
 }
 
-static void
+void
 traverse(tree ns) {
   decl_set decls;
   collect(ns, decls);
- 
+
+  if(decls.empty()) {
+    cerr << "no declarations\n";
+    return;
+  }
+
+  //cout << "\f\n" << DECL_SOURCE_FILE(decl) << ',' << /* todo unsint? */ '\n';
+
   for(tree const &t : decls) {
     print_decl(t);
   }
+}
+
 }
 
 extern "C" void
