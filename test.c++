@@ -1,3 +1,5 @@
+#include "test.h++"
+
 namespace foo { }
 
 typedef int new_t;
@@ -7,6 +9,11 @@ namespace ns1 {
 
   namespace ns2 {
     void foo();
+
+    void
+    foo() {
+
+    }
   }
 }
 
