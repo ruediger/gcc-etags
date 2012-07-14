@@ -1,4 +1,4 @@
-// copied from http://www.codesynthesis.com/~boris/blog/2010/05/03/parsing-cxx-with-gcc-plugin-part-1/
+// Parts copied from http://www.codesynthesis.com/~boris/blog/2010/05/03/parsing-cxx-with-gcc-plugin-part-1/
 
 // g++ -std=c++0x -Wall -Wextra -I`g++ -print-file-name=plugin`/include -fPIC -shared plugin.c++ -o plugin.so
 // g++ -S -fplugin=./plugin.so test.c++
