@@ -1,6 +1,5 @@
 // Parts copied from http://www.codesynthesis.com/~boris/blog/2010/05/03/parsing-cxx-with-gcc-plugin-part-1/
 
-// g++ -std=c++0x -Wall -Wextra -I`g++ -print-file-name=plugin`/include -fPIC -shared gccetags.c++ -o gccetags.so
 // g++ -S -fplugin=./gccetags.so test.c++
 
 #include <stdlib.h>
