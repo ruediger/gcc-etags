@@ -205,6 +205,34 @@ print_decl(extended_tree const &xtree) {
 }
 
 void
+collect_class(tree decl, decl_set &set) {
+  tree type = TYPE_MAIN_VARIANT(TREE_TYPE(decl));
+
+  for(tree d(TYPE_FIELDS(type));
+      d != 0;
+      d = TREE_CHAIN(d))
+  {
+    int const tc = TREE_CODE(d);
+    if( (tc == TYPE_DECL and DECL_SELF_REFERENCE_P(d)) or
+        (tc == FIELD_DECL and DECL_ARTIFICIAL(d)) )
+    {
+      continue;
+    }
+
+    set.insert(d);
+  }
+
+  for(tree d(TYPE_METHODS(type));
+      d != 0;
+      d = TREE_CHAIN (d))
+  {
+    if(not DECL_ARTIFICIAL (d)) {
+      set.insert (d);
+    }
+  }
+}
+
+void
 collect(tree ns, decl_set &set) {
   tree decl;
   cp_binding_level *level = NAMESPACE_LEVEL(ns);
@@ -213,6 +241,13 @@ collect(tree ns, decl_set &set) {
   for(decl = level->names; decl != 0; decl = TREE_CHAIN (decl)) {
     if(DECL_IS_BUILTIN(decl) or DECL_EXTERNAL(decl)) {
       continue;
+    }
+
+    if(TREE_CODE(decl) == TYPE_DECL and
+       TREE_CODE(TREE_TYPE(decl)) == RECORD_TYPE and
+       DECL_ARTIFICIAL(decl))  // if DECL_ARTIFICIAL is false this is a typedef and not a class declaration
+    {
+      collect_class(decl, set);
     }
 
     set.insert(decl);
