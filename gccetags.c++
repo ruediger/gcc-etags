@@ -166,19 +166,22 @@ char const *decl_name(tree decl) {
 }
 
 std::string format_namespaces(tree decl) {
-  tree cntxt = DECL_CONTEXT(decl);
-  if(cntxt) {
-    int tc = TREE_CODE(cntxt);
+  std::string s;
+  std::string tmp;
 
-    if(tc == RECORD_TYPE) {
-      return std::string("::") + decl_name(TYPE_NAME(cntxt));
+  for(tree cntxt = CP_DECL_CONTEXT(decl);
+      cntxt != global_namespace;
+      cntxt = CP_DECL_CONTEXT(cntxt))
+  {
+    if(TREE_CODE(cntxt) == RECORD_TYPE) {
+      cntxt = TYPE_NAME(cntxt);
     }
 
-    if(tc == NAMESPACE_DECL) {
-      return std::string("::") + decl_name(cntxt) + format_namespaces(cntxt);
-    }
+    tmp = std::string("::") + decl_name(cntxt) + s;
+    s.swap(tmp);
   }
-  return "";
+
+  return s;
 }
 
 char const DEL = '\x7f';
