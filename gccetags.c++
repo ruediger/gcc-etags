@@ -138,15 +138,14 @@ extend_trees(decl_set &s) {
     xloc = expand_location(DECL_SOURCE_LOCATION(xtree.decl));
 
     while(std::getline(in, buffer)) {
+      size_t charpos_tmp = charpos;
+      charpos += buffer.size();
       ++line;
       if(line >= xloc.line) {
-        xtree.charpos = charpos + xloc.column;
+        xtree.charpos = charpos_tmp + xloc.column;
         xtree.pattern = line_to_pattern(xtree.decl, buffer);
         new_s.insert(xtree);
         break;
-      }
-      else {
-        charpos += buffer.size();
       }
     }
 
