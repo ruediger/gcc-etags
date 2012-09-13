@@ -169,6 +169,11 @@ std::string format_namespaces(tree decl) {
   tree cntxt = DECL_CONTEXT(decl);
   if(cntxt) {
     int tc = TREE_CODE(cntxt);
+
+    if(tc == RECORD_TYPE) {
+      return std::string("::") + decl_name(TYPE_NAME(cntxt));
+    }
+
     if(tc == NAMESPACE_DECL) {
       return std::string("::") + decl_name(cntxt) + format_namespaces(cntxt);
     }
