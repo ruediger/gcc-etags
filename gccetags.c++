@@ -94,7 +94,7 @@ line_to_pattern(tree decl, std::string const &line) {
   tree type = TREE_TYPE(decl);
   int const tc = TREE_CODE(type);
 
-  size_t beg = line.rfind(';', col);
+  size_t beg = line.rfind(';', col > 0 ? col-1 : col);
   if(beg == std::string::npos) {
     beg = 0;
   }
