@@ -159,13 +159,15 @@ extend_trees(decl_set &s) {
   s = std::move(new_s);
 }
 
-char const *decl_name(tree decl) {
+char const *
+decl_name(tree decl) {
   assert(decl);
   tree id = DECL_NAME(decl);
   return id ? IDENTIFIER_POINTER(id) : "<unnamed>";
 }
 
-std::string format_namespaces(tree decl) {
+std::string
+format_namespaces(tree decl) {
   std::string s;
   std::string tmp;
 
