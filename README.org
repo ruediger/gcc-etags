@@ -1,0 +1,13 @@
+# -*- mode:org; coding:utf-8; mode:visual-line; -*-
+#+TITLE: gcc-etags README
+#+AUTHOR: Rüdiger Sonderfeld <ruediger@c-plusplus.de>
+
+=gcc-etags= is a GCC plugin to create [[http://emacswiki.org/emacs/EmacsTags][etags]] compatible files for C++.  Tags are a (rather primitive) way of navigating source code in Emacs or other editors.  ETag is the implementation that comes with Emacs and the tags basically consist of a short regex, the name of the tag and where to find it.  While ETag has a very primitive mechanism of parsing files =gcc-etags= uses the GCC plugin interface to utilize GCC's C++ frontend.
+
+This is more of an experimental package I wrote to understand the GCC plugin interface.  It is very hacky and currently does not even support struct/class members.  Much of the code is inspired by Boris Kolpackov's blog series about GCC plugins: [[http://www.codesynthesis.com/~boris/blog/2010/05/03/parsing-cxx-with-gcc-plugin-part-1/][Parsing C++ with GCC plugins, Part 1]], [[http://codesynthesis.com/~boris/blog/2010/05/10/parsing-cxx-with-gcc-plugin-part-2/][Part 2]], and [[http://codesynthesis.com/~boris/blog/2010/05/17/parsing-cxx-with-gcc-plugin-part-3/][Part 3]].  Also checkout the [[http://gcc.gnu.org/wiki/plugins][GCC wiki on Plugins]] and the GCC documentation.
+
+* Building/Install
+=gcc-etags= requires a new version of GCC (4.5+).  On Ubuntu/Debian the =gcc-*-plugin-dev= package is required (e.g., =gcc-4.6-plugin-dev= for GCC 4.6).  To build it simply call =make=.
+
+* Usage
+To use =gcc-etags= simply call =g++= with the following parameters: =-S -fplugin\=./gccetags.so=.  To make things easier there is a =g++etags.sh= wrapper script available.  Theoretically =gcc-etags= can utilize a projects Makefile and change the gcc/g++ calls to the appropriated =gcc-etags= calls.  There is a script =makeetags.sh= available to achieve this.
